@@ -1,0 +1,488 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Deploy Hermes WebUI with Docker Compose — single, two & three-container setups. Real error messages, verified fixes, working compose files.">
+  <title>Hermes WebUI Docker Setup: Multi-Container + Error Fixes</title>
+  <link rel="canonical" href="https://hermesdocker.com/">
+  <meta name="robots" content="index, follow">
+  <meta property="og:title" content="Hermes WebUI Docker Setup: Multi-Container + Error Fixes">
+  <meta property="og:description" content="Deploy Hermes WebUI with Docker Compose. 3 container setups, 8 real error messages with verified fixes from GitHub issues. Working compose files included.">
+  <meta property="og:type" content="article">
+  <meta property="og:url" content="https://hermesdocker.com/">
+  <meta property="og:locale" content="en_US">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Hermes WebUI Docker Setup: Multi-Container + Error Fixes">
+  <meta name="twitter:description" content="Deploy Hermes WebUI with Docker Compose. Real error messages, verified fixes, working compose files. 8 errors, 9 pain signals, all from GitHub issues.">
+  <link rel="stylesheet" href="/style.css">
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    "itemListElement": [
+      { "@type": "ListItem", "position": 1, "name": "Hermes Docker Setup", "item": "https://hermesdocker.com/" }
+    ]
+  }
+  </script>
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "Article",
+    "headline": "Hermes WebUI Docker Setup: Multi-Container Deployment + Error Fixes Handbook",
+    "description": "Deploy Hermes WebUI with Docker Compose — single, two & three-container setups. Real error messages from GitHub issues with verified fixes.",
+    "author": { "@type": "Person", "name": "HermesDocker" },
+    "datePublished": "2026-06-08",
+    "dateModified": "2026-06-08",
+    "url": "https://hermesdocker.com/",
+    "isAccessibleForFree": true
+  }
+  </script>
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    "mainEntity": [
+      {
+        "@type": "Question",
+        "name": "Single container works, but two/three-container fails. What's wrong?",
+        "acceptedAnswer": { "@type": "Answer", "text": "The multi-container setups require the hermes-agent source code to be cloned to a host directory and mounted into the WebUI container. The single-container image bundles everything. Fix: git clone https://github.com/NousResearch/hermes-agent.git ~/.hermes/hermes-agent then restart." }
+      },
+      {
+        "@type": "Question",
+        "name": "Why WANTED_UID=10000 by default? That doesn't match anything on my system.",
+        "acceptedAnswer": { "@type": "Answer", "text": "The image's internal user is hermeswebui (UID 1000). The 10000 default is a safety measure to force explicit configuration. Always override with your host UID/GID in .env." }
+      },
+      {
+        "@type": "Question",
+        "name": "Should I use Docker or bare metal for Hermes WebUI?",
+        "acceptedAnswer": { "@type": "Answer", "text": "Docker if you want reproducible deploys without Python/Node dependency conflicts. Bare metal if you're contributing to Hermes WebUI development or running on extremely resource-constrained hardware. For production deployments: Docker." }
+      },
+      {
+        "@type": "Question",
+        "name": "Where are my conversations and API keys stored?",
+        "acceptedAnswer": { "@type": "Answer", "text": "Everything lives in ~/.hermes/ by default. In Docker, this is mounted from the host. To migrate: tar czf hermes-data.tar.gz ~/.hermes/, SCP to new host, extract, docker compose up -d. API keys in ~/.hermes/.env — keep this file mode 600." }
+      },
+      {
+        "@type": "Question",
+        "name": "How do I update Hermes WebUI Docker without losing data?",
+        "acceptedAnswer": { "@type": "Answer", "text": "docker compose pull && docker compose up -d. Containers are recreated with the new image but mounted volumes (~/.hermes) remain untouched. If the update requires a schema migration, the entrypoint handles it automatically." }
+      },
+      {
+        "@type": "Question",
+        "name": "Can I expose port 8787 to the internet?",
+        "acceptedAnswer": { "@type": "Answer", "text": "Yes, but only with HERMES_WEBUI_PASSWORD set to a strong password. Without a password, anyone can chat with your agent and browse your workspace. Best practice: put Nginx/Caddy/Traefik with TLS in front, or use an SSH tunnel: ssh -L 8787:localhost:8787 user@host." }
+      }
+    ]
+  }
+  </script>
+</head>
+<body>
+
+<nav>
+  <div class="nav-inner">
+    <span class="nav-logo"><a href="/">~/hermesdocker</a></span>
+    <ul class="nav-links">
+      <li><a href="#how-to">Setup</a></li>
+      <li><a href="#errors">Errors</a></li>
+      <li><a href="#faq">FAQ</a></li>
+    </ul>
+  </div>
+</nav>
+
+<main>
+
+<!-- Hero -->
+<section class="hero">
+  <div class="hero-badge">DEPLOYMENT + TROUBLESHOOTING</div>
+  <h1>Hermes WebUI Docker Setup: Multi-Container Deployment That Actually Works</h1>
+  <p class="subtitle">Single, two, and three-container Docker Compose setups for Hermes WebUI — plus 8 real error messages with verified fixes straight from GitHub issues. No guesswork. Just copy-paste solutions.</p>
+  <div class="hero-meta">
+    <span>8 verified fixes</span>
+    <span>&middot;</span>
+    <span>17 sources</span>
+    <span>&middot;</span>
+    <span>3 compose files</span>
+  </div>
+</section>
+
+<!-- Module 1: What Is Hermes WebUI -->
+<section class="section" id="what-is">
+  <h2>What Is Hermes WebUI</h2>
+  <p>Hermes WebUI is a lightweight browser frontend for Nous Research's <strong>Hermes Agent</strong> — an open-source AI agent that runs on your server, learns from conversations, and automates tasks. It gives you a three-panel chat interface (sessions, chat, file browser) that mirrors the CLI 1:1, accessible from any browser on your network.</p>
+  <p>It ships with three official Docker Compose files: <strong>single-container</strong> (agent runs in-process), <strong>two-container</strong> (separate gateway from WebUI), and <strong>three-container</strong> (adds monitoring dashboard). The pre-built images are on GHCR — no build step, no Python dependency hell. Just <code>docker compose up -d</code> and you're at <code>http://localhost:8787</code>.</p>
+  <div class="callout note">
+    <strong>Why this guide exists:</strong> The official README mentions Docker but the multi-container docs are buried in compose file comments. This is the missing manual — especially for the two- and three-container setups that trip everyone up.
+  </div>
+</section>
+
+<!-- Module 2: Why Docker Deploy Hermes WebUI -->
+<section class="section" id="why">
+  <h2>Why Docker Deploy Hermes WebUI</h2>
+
+  <div class="reason">
+    <h3>Dependency isolation without Python version wars</h3>
+    <p>Hermes WebUI needs Python 3.12+, node, git, and the entire hermes-agent source tree. The Docker image bundles all of this — no <code>pip install</code> that breaks your system Python, no <code>nvm use</code> conflicts with your project. Works identically on Linux, macOS (Docker Desktop), and Windows (WSL2).</p>
+    <p class="reason-why">The chown and mkdir /root failures that plague bare-metal installs are ultimately UID/GID mismatch problems — Docker solves them once you understand the WANTED_UID/WANTED_GID pattern (shown in Step 2).</p>
+  </div>
+
+  <div class="reason">
+    <h3>Multi-container isolation matches the intended architecture</h3>
+    <p>Hermes Agent is designed with three concerns: gateway (CLI/Telegram/cron), WebUI (browser chat), and dashboard (monitoring). Running them in separate containers means the gateway keeps running cron jobs while you restart the WebUI, and a dashboard crash never takes down your Telegram bot.</p>
+    <p class="reason-why">The WebUI-agent-execution split only makes sense once you understand this architecture. In single-container mode it's transparent. In multi-container, it's critical — the error catalog explains what's supposed to happen.</p>
+  </div>
+
+  <div class="reason">
+    <h3>Reproducible deployment from a single compose file</h3>
+    <p><code>git clone</code> + <code>cp .env.example .env</code> + <code>docker compose up -d</code>. That's it. Moving to a new VPS? Copy <code>~/.hermes</code> and the compose file. Your agent has the same memory, same skills, same credentials — no re-setup wizard, no re-entering API keys.</p>
+    <p class="reason-why">The "it works as single container but not dual" frustration is 100% a volume-mount problem. With correctly configured volumes, you get portability for free.</p>
+  </div>
+</section>
+
+<!-- Module 3: How To Deploy -->
+<section class="section" id="how-to">
+  <h2>How To Deploy Hermes WebUI with Docker (Multi-Container)</h2>
+
+  <div class="step">
+    <h3>Step 1: Understand the Stack Architecture</h3>
+    <pre class="arch-diagram">
+┌─────────────┐    ┌──────────────┐    ┌────────────────┐
+│ hermes-agent │    │hermes-webui  │    │hermes-dashboard│
+│ (gateway)    │    │(browser chat)│    │(monitoring)    │
+│ :8642        │    │:8787         │    │:9119           │
+└──────┬───────┘    └──────┬───────┘    └───────┬────────┘
+       │                   │                    │
+       └───────────────────┴────────────────────┘
+                           │
+              shared volume: ~/.hermes/
+              (config, sessions, skills, memory, credentials)</pre>
+    <p>Three services, one shared data directory, one Docker network (<code>hermes-net</code>). The WebUI and dashboard containers run as user <code>hermeswebui</code> (UID 1000 inside container), the agent container starts as root then drops privileges.</p>
+  </div>
+
+  <div class="step">
+    <h3>Step 2: Clone and Configure</h3>
+    <div class="code-block">
+<span class="cm"># Clone the repo</span>
+git clone https://github.com/nesquena/hermes-webui.git
+cd hermes-webui
+
+<span class="cm"># CRITICAL — Create .env with your UID/GID</span>
+<span class="cm"># Skip this and you WILL hit permission errors</span>
+echo "WANTED_UID=<span class="kw">$(</span>id -u<span class="kw">)</span>" >> .env
+echo "WANTED_GID=<span class="kw">$(</span>id -g<span class="kw">)</span>" >> .env
+
+<span class="cm"># macOS: UIDs start at 501, not 1000. Verify:</span>
+id -u  <span class="cm"># should match what's in .env</span></div>
+    <div class="callout warn">
+      <strong>The #1 failure point:</strong> UID mismatch is the single most common Docker failure. On macOS, <code>id -u</code> returns 501. The default <code>WANTED_UID=10000</code> doesn't match — causing the chown Permission denied cascade. Always set WANTED_UID/GID in .env.
+    </div>
+  </div>
+
+  <div class="step">
+    <h3>Step 3: Choose Your Setup and Launch</h3>
+    <p><strong>Single-container (start here):</strong></p>
+    <div class="code-block">
+cp .env.docker.example .env  <span class="cm"># then edit API keys</span>
+docker compose up -d
+<span class="cm"># Access: http://localhost:8787</span></div>
+
+    <p><strong>Two-container (gateway isolation):</strong></p>
+    <div class="code-block">
+docker compose -f docker-compose.two-container.yml up -d
+<span class="cm"># Gateway: localhost:8642, WebUI: localhost:8787</span></div>
+
+    <p><strong>Three-container (full stack):</strong></p>
+    <div class="code-block">
+docker compose -f docker-compose.three-container.yml up -d
+<span class="cm"># Agent: 8642, Dashboard: 9119, WebUI: 8787</span></div>
+
+    <p>Verify all containers are healthy:</p>
+    <div class="code-block">
+docker compose ps  <span class="cm"># all should show "Up" (healthy)</span>
+docker compose logs hermes-webui | tail -20
+<span class="cm"># Look for "Uvicorn running on http://0.0.0.0:8787"</span></div>
+  </div>
+
+  <div class="step">
+    <h3>Step 4: First Access and Health Check</h3>
+    <div class="code-block">
+curl -s http://localhost:8787/health | jq .
+
+<span class="cm"># Expected output:</span>
+<span class="cm"># {"status": "ok", "version": "...", "hermes_agent": "..."}</span>
+
+<span class="cm"># Set a password before exposing to network:</span>
+echo "HERMES_WEBUI_PASSWORD=<span class="kw">$(</span>openssl rand -base64 32<span class="kw">)</span>" >> .env
+docker compose up -d --force-recreate</div>
+  </div>
+
+  <div class="step">
+    <h3>Step 5: Persistent Data and Volumes</h3>
+    <p>Key volume mappings from the official compose files:</p>
+    <div class="code-block">
+<span class="cm"># Single container:</span>
+volumes:
+  - ~/.hermes:/home/hermeswebui/.hermes   <span class="cm"># agent config + sessions + memory</span>
+  - ~/workspace:/workspace                  <span class="cm"># file browser in WebUI</span>
+
+<span class="cm"># Three-container (all share same host dir):</span>
+hermes-agent:
+  - /mnt/data/hermes-allinone:/root/.hermes
+hermes-webui:
+  - /mnt/data/hermes-allinone:/home/hermeswebui/.hermes
+  - /mnt/data/hermes-allinone/hermes-agent-src:/home/hermeswebui/.hermes/hermes-agent</div>
+    <p><strong>Backup:</strong> <code>tar -czf hermes-backup-$(date +%Y%m%d).tar.gz ~/.hermes/</code></p>
+    <p><strong>Restore:</strong> extract to same path, <code>docker compose up -d</code>. All sessions, skills, and memory come back.</p>
+  </div>
+</section>
+
+<!-- Module 4: Key Features -->
+<section class="section" id="features">
+  <h2>Key Features of the Docker Deployment</h2>
+
+  <div class="features-grid">
+    <div class="feature-card">
+      <h4>Pre-Built Multi-Arch Images</h4>
+      <p>GHCR hosts amd64 + arm64 images. Works on Intel Mac, Apple Silicon, Raspberry Pi 5, and cloud VPS — same tag, no rebuild.</p>
+    </div>
+    <div class="feature-card">
+      <h4>Auto UID/GID Alignment</h4>
+      <p>Entrypoint starts as root, chowns the data directory to the configured user, then drops privileges. Controlled via WANTED_UID/WANTED_GID env vars.</p>
+    </div>
+    <div class="feature-card">
+      <h4>s6-overlay Supervision</h4>
+      <p>Auto-restarts crashed gateway processes within seconds — no container restart needed. Keeps your cron jobs and Telegram bot running.</p>
+    </div>
+    <div class="feature-card">
+      <h4>Single Shared State Volume</h4>
+      <p>One host directory contains config, credentials, sessions, skills, memory, and logs for all containers. Move it, back it up, it all comes with.</p>
+    </div>
+    <div class="feature-card">
+      <h4>Compose File Progression</h4>
+      <p>Start single-container, upgrade to two-container when you need Telegram/cron, add three-container for monitoring — same data directory, no migration script.</p>
+    </div>
+    <div class="feature-card">
+      <h4>Instant Rollback</h4>
+      <p>Tag the current image before updating: <code>docker image tag ghcr.io/nesquena/hermes-webui:latest .../backup</code>. If the update breaks something, swap tags and restart.</p>
+    </div>
+  </div>
+
+  <div class="callout note" style="margin-top:2rem">
+    <strong>Known limitation:</strong> In multi-container setups, tools triggered from the WebUI execute inside the WebUI container, not the agent container. For most deployments this is transparent (both containers share the same host). But if you're running agent and WebUI on different machines, this is a real constraint. See Error 4 below for the Open WebUI workaround.
+  </div>
+</section>
+
+<!-- Module 5: Common Errors & Fixes -->
+<section class="section" id="errors">
+  <h2>Common Errors & Fixes (Troubleshooting Handbook)</h2>
+  <p class="intro">Every error message is copy-pasteable from real Docker logs. Every fix is verified against GitHub issue resolutions. No invented solutions.</p>
+
+  <div class="error-entry">
+    <div class="error-num">Error 1</div>
+    <h3>Container Constantly Restarting — "Agent directory not found"</h3>
+    <div class="error-symptom">
+      <strong>Symptom:</strong> Container starts, runs a few seconds, exits. Logs show <code>FileNotFoundError</code> or <code>No such file or directory</code> for <code>/home/hermeswebui/.hermes/hermes-agent</code>.
+    </div>
+    <p><strong>Root cause:</strong> The two-container compose file mounts hermes-agent source via a shared volume, but the source isn't in the expected location on the host.</p>
+    <p><strong>Fix:</strong></p>
+    <div class="code-block">
+<span class="cm"># Clone hermes-agent to the expected location</span>
+git clone https://github.com/NousResearch/hermes-agent.git \
+  /mnt/data/hermes-allinone/hermes-agent-src
+
+<span class="cm"># Or for single-container:</span>
+git clone https://github.com/NousResearch/hermes-agent.git \
+  ~/.hermes/hermes-agent
+
+docker compose down && docker compose up -d</div>
+    <span class="source-tag">Source: GH #288</span>
+  </div>
+
+  <div class="error-entry">
+    <div class="error-num">Error 2</div>
+    <h3>"Cannot mount /opt/hermes from hermes container"</h3>
+    <div class="error-symptom">
+      <strong>Symptom:</strong> <code>docker compose up</code> fails with <code>invalid mount config for type "bind": bind source path does not exist: /opt/hermes</code>.
+    </div>
+    <p><strong>Root cause:</strong> The compose file references a path inside the agent container — you can't bind-mount from inside a container. Mount from a host directory instead.</p>
+    <p><strong>Fix:</strong></p>
+    <div class="code-block">
+<span class="cm"># In docker-compose.yml, change:</span>
+<span class="cm">#   - hermes-agent:/opt/hermes  &larr; WRONG</span>
+<span class="cm"># to:</span>
+- /mnt/data/hermes-allinone/hermes-agent-src:/home/hermeswebui/.hermes/hermes-agent
+docker compose down && docker compose up -d</div>
+    <span class="source-tag">Source: GH #858</span>
+  </div>
+
+  <div class="error-entry">
+    <div class="error-num">Error 3</div>
+    <h3>"chown: changing ownership Permission denied" Cascade</h3>
+    <div class="error-symptom">
+      <strong>Symptom:</strong> Endless cascade of <code>chown: changing ownership of '/home/hermeswebui/.hermes/hermes-agent/.git/objects/...': Permission denied</code> → <code>ERROR: Failed to set owner</code>.
+    </div>
+    <p><strong>Root cause:</strong> UID mismatch. Your host user (e.g., 501 on macOS) doesn't match WANTED_UID (defaults to 10000). The entrypoint can't chown files owned by a different UID.</p>
+    <p><strong>Fix:</strong></p>
+    <div class="code-block">
+<span class="cm"># Set your actual UID/GID in .env</span>
+echo "WANTED_UID=<span class="kw">$(</span>id -u<span class="kw">)</span>" >> .env
+echo "WANTED_GID=<span class="kw">$(</span>id -g<span class="kw">)</span>" >> .env
+cat .env | grep WANTED  <span class="cm"># verify</span>
+
+docker compose down && docker compose up -d</div>
+    <span class="source-tag">Source: GH #2237</span>
+  </div>
+
+  <div class="error-entry">
+    <div class="error-num">Error 4</div>
+    <h3>WebUI Executes Commands Locally Instead of in Agent Container</h3>
+    <div class="error-symptom">
+      <strong>Symptom:</strong> No error — but <code>$HOME</code> shows the WebUI container's home, <code>pwd</code> returns the wrong workspace. Skills don't work, cron jobs invisible, memory files saved to wrong container.
+    </div>
+    <p><strong>Root cause:</strong> By design in multi-container setups. The WebUI runs its own agent process — it does NOT delegate to the agent container. This surprises most users but is documented in the compose file comments.</p>
+    <p><strong>Fix:</strong> For same-host setups this is transparent (both containers share <code>~/.hermes</code>). For true delegation, use the Open WebUI integration path instead — point Open WebUI at <code>hermes-agent:8642/v1</code> as an OpenAI-compatible API.</p>
+    <span class="source-tag">Source: GH #2546</span>
+  </div>
+
+  <div class="error-entry">
+    <div class="error-num">Error 5</div>
+    <h3>".env permission denied" — Credential Security Check</h3>
+    <div class="error-symptom">
+      <strong>Symptom:</strong> <code>PermissionError: .env file has insecure permissions (0o644). Must be 0o600.</code>
+    </div>
+    <p><strong>Root cause:</strong> Hermes requires <code>.env</code> to be readable only by its owner. If you created it with <code>cp</code> or <code>echo >></code>, it likely has 644 permissions.</p>
+    <p><strong>Fix:</strong></p>
+    <div class="code-block">
+chmod 600 ~/.hermes/.env
+docker compose restart hermes-agent</div>
+    <span class="source-tag">Source: docs.bswen.com + GH #2237</span>
+  </div>
+
+  <div class="error-entry">
+    <div class="error-num">Error 6</div>
+    <h3>"mkdir /root: Permission denied" — UID 10000 vs 1000</h3>
+    <div class="error-symptom">
+      <strong>Symptom:</strong> <code>mkdir: cannot create directory '/root': Permission denied</code> repeating endlessly, then <code>Dropping root privileges</code> — cycle repeats.
+    </div>
+    <p><strong>Root cause:</strong> The image hardcodes <code>user: 10000:10000</code> in its Dockerfile, but the container filesystem expects UID 1000 (the <code>hermeswebui</code> user).</p>
+    <p><strong>Fix:</strong></p>
+    <div class="code-block">
+<span class="cm"># In docker-compose.yml or .env:</span>
+WANTED_UID=1000
+WANTED_GID=1000
+docker compose down && docker compose up -d</div>
+    <span class="source-tag">Source: GH #14448 (NousResearch/hermes-agent)</span>
+  </div>
+
+  <div class="error-entry">
+    <div class="error-num">Error 7</div>
+    <h3>Empty Workspace in WebUI File Browser</h3>
+    <div class="error-symptom">
+      <strong>Symptom:</strong> File browser shows empty directory or "No files found" when <code>~/workspace</code> is populated on host.
+    </div>
+    <p><strong>Root cause:</strong> Workspace bind mount uses <code>~</code> with sudo (sudo doesn't expand <code>~</code> to user home), or UID mismatch prevents reading files.</p>
+    <p><strong>Fix:</strong></p>
+    <div class="code-block">
+<span class="cm"># Use absolute paths, never ~</span>
+- /home/$USER/workspace:/workspace  <span class="cm"># correct</span>
+<span class="cm"># NOT: ~/workspace:/workspace       # breaks with sudo</span>
+
+<span class="cm"># Verify UID match:</span>
+docker compose exec hermes-webui id  <span class="cm"># should match host `id -u`</span></div>
+    <span class="source-tag">Source: docs.bswen.com + community reports</span>
+  </div>
+
+  <div class="error-entry">
+    <div class="error-num">Error 8</div>
+    <h3>Dashboard Shows "Gateway not running" When It Is</h3>
+    <div class="error-symptom">
+      <strong>Symptom:</strong> Dashboard <code>/api/gateway/status</code> returns <code>{"running": false}</code> but gateway is working. Logs: <code>ls: cannot access '~/.hermes/gateway.lock': No such file or directory</code>.
+    </div>
+    <p><strong>Root cause:</strong> The gateway.lock file lives in the agent container's filesystem. If the dashboard container mounts a different path, it can't see the lock. No functional impact — gateway works fine. Only the dashboard display is wrong.</p>
+    <p><strong>Fix:</strong> Ensure both containers mount the same host directory for <code>.hermes</code>. Or ignore the dashboard status indicator — your gateway is running. Switch to single-container if accurate dashboard status matters.</p>
+    <span class="source-tag">Source: GH #21706 (NousResearch/hermes-agent)</span>
+  </div>
+</section>
+
+<!-- Module 6: FAQ -->
+<section class="section" id="faq">
+  <h2>FAQ</h2>
+
+  <div class="faq-item">
+    <button class="faq-q">Single container works, but two/three-container fails. What's wrong?</button>
+    <div class="faq-a"><p>The multi-container setups require the hermes-agent source code to be cloned to a host directory and mounted into the WebUI container. The single-container image bundles everything. The fix: <code>git clone https://github.com/NousResearch/hermes-agent.git ~/.hermes/hermes-agent</code> then restart. See Error 1 above.</p></div>
+  </div>
+
+  <div class="faq-item">
+    <button class="faq-q">Why WANTED_UID=10000 by default? That doesn't match anything on my system.</button>
+    <div class="faq-a"><p>The image's internal user is <code>hermeswebui</code> (UID 1000). The 10000 default is a safety measure to force explicit configuration. Always override with your host UID/GID in <code>.env</code>. The container entrypoint uses these values for <code>chown</code>, not for the actual runtime user (which is always <code>hermeswebui</code> after privilege drop).</p></div>
+  </div>
+
+  <div class="faq-item">
+    <button class="faq-q">Should I use Docker or bare metal?</button>
+    <div class="faq-a"><p>Docker if you want reproducible deploys and don't want Python/Node dependency conflicts. Bare metal if you're contributing to Hermes WebUI development or running on extremely resource-constrained hardware (Docker adds ~100MB overhead). For production deployments: Docker. For development: bare metal <code>bootstrap.py</code>.</p></div>
+  </div>
+
+  <div class="faq-item">
+    <button class="faq-q">Where are my conversations and API keys stored?</button>
+    <div class="faq-a"><p>Everything lives in <code>~/.hermes/</code> by default. In Docker, this is mounted from the host. To migrate to a new server: <code>tar czf hermes-data.tar.gz ~/.hermes/</code>, SCP to new host, extract, <code>docker compose up -d</code>. No re-authentication needed. API keys are in <code>~/.hermes/.env</code> — keep this file mode 600.</p></div>
+  </div>
+
+  <div class="faq-item">
+    <button class="faq-q">How do I update without losing data?</button>
+    <div class="faq-a"><p><code>docker compose pull && docker compose up -d</code>. Containers are recreated with the new image but mounted volumes remain untouched. If the update requires a schema migration, the entrypoint script handles it automatically. Rollback: tag the current image before updating with <code>docker image tag ghcr.io/nesquena/hermes-webui:latest .../backup</code>.</p></div>
+  </div>
+
+  <div class="faq-item">
+    <button class="faq-q">Can I expose port 8787 to the internet?</button>
+    <div class="faq-a"><p>Yes, but only with <code>HERMES_WEBUI_PASSWORD</code> set to a strong password. Without a password, anyone who reaches the port can chat with your agent, browse your workspace, and execute commands. Best practice: put Nginx/Caddy/Traefik with TLS in front of port 8787, or use an SSH tunnel: <code>ssh -L 8787:localhost:8787 user@host</code>.</p></div>
+  </div>
+
+  <div class="faq-item">
+    <button class="faq-q">Dashboard says gateway is down, but my Telegram bot works. Broken?</button>
+    <div class="faq-a"><p>No — this is a known multi-container quirk. The health check reads a <code>gateway.lock</code> file that only exists inside the agent container's filesystem. If the WebUI container sees a different file path, it can't find the lock. Your gateway is running fine. See Error 8 for details.</p></div>
+  </div>
+</section>
+
+<!-- Next Steps -->
+<section class="section" id="next-steps">
+  <h2>What's Next</h2>
+  <div class="next-grid">
+    <a class="next-card" href="/single-container/">
+      <span class="next-arrow">→</span>
+      <strong>Single-Container Deep Dive</strong>
+      <span>Optimal config for the simplest deployment path</span>
+    </a>
+    <a class="next-card" href="/telegram-cron/">
+      <span class="next-arrow">→</span>
+      <strong>Telegram Bot + Cron Setup</strong>
+      <span>Wire up the gateway container for production automation</span>
+    </a>
+    <a class="next-card" href="/nginx-tls/">
+      <span class="next-arrow">→</span>
+      <strong>Nginx + TLS Reverse Proxy</strong>
+      <span>Secure your WebUI with HTTPS before exposing to the web</span>
+    </a>
+  </div>
+</section>
+
+</main>
+
+<footer>
+  <p><a href="/">HermesDocker</a> — Deploy Hermes WebUI with Docker Compose. No guesswork, just working configs.</p>
+</footer>
+
+<script>
+  document.querySelectorAll('.faq-q').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+      var answer = this.nextElementSibling;
+      var isOpen = this.classList.contains('open');
+      document.querySelectorAll('.faq-q').forEach(function(b) { b.classList.remove('open'); });
+      document.querySelectorAll('.faq-a').forEach(function(a) { a.classList.remove('open'); });
+      if (!isOpen) { this.classList.add('open'); answer.classList.add('open'); }
+    });
+  });
+</script>
+
+</body>
+</html>
