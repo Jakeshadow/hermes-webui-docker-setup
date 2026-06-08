@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Hermes WebUI vs Open WebUI Docker comparison — deployment complexity, resource usage, multi-model support, and which one fits your stack. Comparison table included.">
+  <title>Hermes WebUI vs Open WebUI: Docker Deployment Comparison (2026)</title>
+  <link rel="canonical" href="https://hermesdocker.com/vs-open-webui/">
+  <meta name="robots" content="index, follow">
+  <meta property="og:title" content="Hermes WebUI vs Open WebUI: Docker Deployment Comparison (2026)">
+  <meta property="og:description" content="Side-by-side Docker deployment comparison — architecture, resource usage, multi-model support, and setup time. Find which fits your stack.">
+  <meta property="og:type" content="article">
+  <meta property="og:url" content="https://hermesdocker.com/vs-open-webui/">
+  <meta property="og:locale" content="en_US">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Hermes WebUI vs Open WebUI — Docker Deployment Comparison">
+  <meta name="twitter:description" content="Side-by-side Docker comparison — which fits your stack?">
+  <link rel="stylesheet" href="/style.css">
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    "itemListElement": [
+      { "@type": "ListItem", "position": 1, "name": "Hermes Docker Setup", "item": "https://hermesdocker.com/" },
+      { "@type": "ListItem", "position": 2, "name": "vs Open WebUI", "item": "https://hermesdocker.com/vs-open-webui/" }
+    ]
+  }
+  </script>
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "Article",
+    "headline": "Hermes WebUI vs Open WebUI: Docker Deployment Comparison (2026)",
+    "description": "Side-by-side comparison of Hermes WebUI and Open WebUI Docker deployment — architecture, resource requirements, multi-model support, and setup complexity. Decision guide with comparison table.",
+    "author": { "@type": "Person", "name": "HermesDocker" },
+    "datePublished": "2026-06-09",
+    "dateModified": "2026-06-09",
+    "url": "https://hermesdocker.com/vs-open-webui/",
+    "isAccessibleForFree": true
+  }
+  </script>
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    "mainEntity": [
+      {
+        "@type": "Question",
+        "name": "Is Hermes WebUI better than Open WebUI?",
+        "acceptedAnswer": { "@type": "Answer", "text": "They serve different purposes. Hermes WebUI is a dedicated browser interface for Hermes Agent — if you're already using Hermes, it's the simplest way to chat from a browser. Open WebUI is a full-featured AI chat hub that connects to 15+ model backends including Hermes via its API. They're complementary: many users run Open WebUI for daily chat and Hermes WebUI for agent configuration." }
+      },
+      {
+        "@type": "Question",
+        "name": "Can I use both Hermes WebUI and Open WebUI together?",
+        "acceptedAnswer": { "@type": "Answer", "text": "Yes. A common setup: Open WebUI on port 3000 as the daily chat interface (connecting to Hermes Agent via API at hermes-agent:8642/v1), and Hermes WebUI on port 8787 for session management, skill editing, and workspace browsing. They don't conflict and can share the same Hermes Agent backend." }
+      },
+      {
+        "@type": "Question",
+        "name": "Which uses fewer resources — Hermes WebUI or Open WebUI?",
+        "acceptedAnswer": { "@type": "Answer", "text": "Hermes WebUI (single-container) is lighter — ~200MB RAM idle. Open WebUI needs ~500MB-1GB RAM for its Python backend, Svelte frontend, and optional RAG vector database. If you're on a 2GB VPS, Hermes WebUI fits comfortably alongside the agent. Open WebUI needs a 4GB+ instance." }
+      }
+    ]
+  }
+  </script>
+</head>
+<body>
+
+<nav>
+  <div class="nav-inner">
+    <span class="nav-logo"><a href="/">~/hermesdocker</a></span>
+    <ul class="nav-links">
+      <li><a href="/#how-to">Setup</a></li>
+      <li><a href="/#errors">Errors</a></li>
+      <li><a href="/#faq">FAQ</a></li>
+    </ul>
+  </div>
+</nav>
+
+<main>
+
+<!-- Hero -->
+<section class="hero">
+  <div class="hero-badge">COMPARISON</div>
+  <h1>Hermes WebUI vs Open WebUI — Docker Deployment Comparison (2026)</h1>
+  <p class="subtitle"><strong>Bottom line:</strong> Hermes WebUI is a dedicated browser interface for the 140K+ star Hermes Agent — deploy in 5 minutes, 3 container modes, built for agent management. Open WebUI is a multi-model chat hub supporting 15+ backends — deploy in 1 minute, richer features but heavier. If you're already using Hermes Agent, Hermes WebUI is the simpler, lighter choice. If you need one interface for Ollama, OpenAI, and Hermes together, Open WebUI wins. Many users run both.</p>
+</section>
+
+<!-- Comparison Table -->
+<section class="section" id="comparison-table">
+  <h2>Side-by-Side Comparison</h2>
+  <table class="comparison-table" style="width:100%;border-collapse:collapse;margin:24px 0;">
+    <thead>
+      <tr style="border-bottom:2px solid var(--text2);text-align:left;">
+        <th style="padding:12px 8px;">Dimension</th>
+        <th style="padding:12px 8px;">Hermes WebUI</th>
+        <th style="padding:12px 8px;">Open WebUI</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr style="border-bottom:1px solid var(--border);">
+        <td style="padding:10px 8px;"><strong>Purpose</strong></td>
+        <td style="padding:10px 8px;">Dedicated Hermes Agent browser UI</td>
+        <td style="padding:10px 8px;">Universal AI chat platform (multi-model hub)</td>
+      </tr>
+      <tr style="border-bottom:1px solid var(--border);">
+        <td style="padding:10px 8px;"><strong>Model Backends</strong></td>
+        <td style="padding:10px 8px;">1 — Hermes Agent only</td>
+        <td style="padding:10px 8px;">15+ — Ollama, OpenAI, Anthropic, Groq, LM Studio, and more</td>
+      </tr>
+      <tr style="border-bottom:1px solid var(--border);">
+        <td style="padding:10px 8px;"><strong>Deploy Time</strong></td>
+        <td style="padding:10px 8px;"><strong>~5 min</strong> (single-container)</td>
+        <td style="padding:10px 8px;"><strong>~1 min</strong> (single docker run)</td>
+      </tr>
+      <tr style="border-bottom:1px solid var(--border);">
+        <td style="padding:10px 8px;"><strong>Container Modes</strong></td>
+        <td style="padding:10px 8px;">3 (single / dual / triple)</td>
+        <td style="padding:10px 8px;">1 (monolith with optional GPU variant)</td>
+      </tr>
+      <tr style="border-bottom:1px solid var(--border);">
+        <td style="padding:10px 8px;"><strong>Idle RAM</strong></td>
+        <td style="padding:10px 8px;">~200 MB</td>
+        <td style="padding:10px 8px;">~500 MB – 1 GB (with RAG)</td>
+      </tr>
+      <tr style="border-bottom:1px solid var(--border);">
+        <td style="padding:10px 8px;"><strong>RAG / Document Q&A</strong></td>
+        <td style="padding:10px 8px;">❌ (relies on Agent)</td>
+        <td style="padding:10px 8px;">✅ Built-in — 9 vector DBs + doc parsers</td>
+      </tr>
+      <tr style="border-bottom:1px solid var(--border);">
+        <td style="padding:10px 8px;"><strong>Web Search Integration</strong></td>
+        <td style="padding:10px 8px;">❌ (via Agent tools)</td>
+        <td style="padding:10px 8px;">✅ 15+ search engines built-in</td>
+      </tr>
+      <tr style="border-bottom:1px solid var(--border);">
+        <td style="padding:10px 8px;"><strong>Image Generation</strong></td>
+        <td style="padding:10px 8px;">❌</td>
+        <td style="padding:10px 8px;">✅ DALL-E, Gemini, ComfyUI, A1111</td>
+      </tr>
+      <tr style="border-bottom:1px solid var(--border);">
+        <td style="padding:10px 8px;"><strong>GitHub Stars</strong></td>
+        <td style="padding:10px 8px;">~12.5K (webui repo) / 140K+ (agent)</td>
+        <td style="padding:10px 8px;">~138K</td>
+      </tr>
+      <tr style="border-bottom:1px solid var(--border);">
+        <td style="padding:10px 8px;"><strong>Enterprise Auth</strong></td>
+        <td style="padding:10px 8px;">Basic password</td>
+        <td style="padding:10px 8px;">✅ LDAP, SSO, OAuth, SCIM 2.0</td>
+      </tr>
+      <tr>
+        <td style="padding:10px 8px;"><strong>PWA / Mobile</strong></td>
+        <td style="padding:10px 8px;">❌</td>
+        <td style="padding:10px 8px;">✅ Native PWA with offline support</td>
+      </tr>
+    </tbody>
+  </table>
+</section>
+
+<!-- Docker Deployment Comparison -->
+<section class="section" id="docker-comparison">
+  <h2>Docker Deployment: Code Comparison</h2>
+
+  <h3>Hermes WebUI — Single Container (5 min)</h3>
+  <div class="code-block">
+git clone https://github.com/nesquena/hermes-webui.git
+cd hermes-webui
+cp .env.docker.example .env   <span class="cm"># set API keys + UID/GID</span>
+docker compose up -d
+<span class="cm"># Open http://localhost:8787</span></div>
+
+  <h3>Open WebUI — Single Container (1 min)</h3>
+  <div class="code-block">
+docker run -d -p 3000:8080 \
+  -v open-webui:/app/backend/data \
+  --name open-webui \
+  --restart always \
+  ghcr.io/open-webui/open-webui:main
+<span class="cm"># Open http://localhost:3000</span></div>
+
+  <div class="callout note">
+    <strong>Open WebUI is faster to start</strong> because it bundles frontend and backend in one image. Hermes WebUI takes slightly longer because you need to clone the repo and set UID/GID — but these 2 extra steps prevent the #1 permission error that breaks multi-container setups.
+  </div>
+</section>
+
+<!-- When to Use Which -->
+<section class="section" id="decision-guide">
+  <h2>Which One Should You Choose?</h2>
+
+  <div class="reason">
+    <h3>Choose Hermes WebUI when...</h3>
+    <p>You're already using Hermes Agent and want a browser interface for session management, skill editing, and workspace browsing. You value a lightweight setup (200MB RAM) and need the CLI-equivalent experience in a browser. You want multi-container isolation for production — gateway, WebUI, and dashboard running independently.</p>
+  </div>
+
+  <div class="reason">
+    <h3>Choose Open WebUI when...</h3>
+    <p>You need one chat interface for multiple model providers (Ollama + OpenAI + Anthropic). You want built-in RAG for document Q&A, web search integration, or image generation. You need enterprise features like SSO/LDAP or a native mobile PWA. You're not tied to Hermes Agent specifically.</p>
+  </div>
+
+  <div class="reason">
+    <h3>Use both together (recommended hybrid)</h3>
+    <p>Run Hermes Agent as the backend, Hermes WebUI on port 8787 for agent management, and Open WebUI on port 3000 connected to Hermes via its OpenAI-compatible API at <code>hermes-agent:8642/v1</code>. This gives you Open WebUI's rich chat features with Hermes Agent's autonomous capabilities underneath. <a href="https://docs.openwebui.com/getting-started/quick-start/connect-an-agent/hermes-agent/" target="_blank" rel="noopener">Open WebUI officially documents this setup.</a></p>
+  </div>
+</section>
+
+<!-- Resource Comparison -->
+<section class="section" id="resource-comparison">
+  <h2>Resource Requirements: What Fits Your VPS?</h2>
+  <table class="comparison-table" style="width:100%;border-collapse:collapse;margin:24px 0;">
+    <thead>
+      <tr style="border-bottom:2px solid var(--text2);text-align:left;">
+        <th style="padding:12px 8px;">Setup</th>
+        <th style="padding:12px 8px;">Min RAM</th>
+        <th style="padding:12px 8px;">Idle RAM</th>
+        <th style="padding:12px 8px;">Storage</th>
+        <th style="padding:12px 8px;">VPS Tier</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr style="border-bottom:1px solid var(--border);">
+        <td style="padding:10px 8px;"><strong>Hermes Agent + Hermes WebUI (single)</strong></td>
+        <td style="padding:10px 8px;">2 GB</td>
+        <td style="padding:10px 8px;">~400 MB</td>
+        <td style="padding:10px 8px;">~3 GB</td>
+        <td style="padding:10px 8px;">2 GB / 1 vCPU</td>
+      </tr>
+      <tr style="border-bottom:1px solid var(--border);">
+        <td style="padding:10px 8px;"><strong>Hermes Agent + Open WebUI</strong></td>
+        <td style="padding:10px 8px;">4 GB</td>
+        <td style="padding:10px 8px;">~800 MB – 1.2 GB</td>
+        <td style="padding:10px 8px;">~5 GB</td>
+        <td style="padding:10px 8px;">4 GB / 2 vCPU</td>
+      </tr>
+      <tr>
+        <td style="padding:10px 8px;"><strong>All three (Agent + both UIs)</strong></td>
+        <td style="padding:10px 8px;">4 GB</td>
+        <td style="padding:10px 8px;">~1 – 1.5 GB</td>
+        <td style="padding:10px 8px;">~6 GB</td>
+        <td style="padding:10px 8px;">4 GB / 2 vCPU</td>
+      </tr>
+    </tbody>
+  </table>
+  <div class="callout note">
+    <strong>Measured on Hetzner CX22 (2 vCPU, 4 GB RAM, 40 GB SSD).</strong> All container images pre-pulled. Hermes Agent model download (if using local LLM) adds 4-8 GB — not counted here; this guide assumes API-based LLM usage (Anthropic / OpenAI / OpenRouter).
+  </div>
+</section>
+
+<!-- FAQ -->
+<section class="section" id="faq">
+  <h2>FAQ — Hermes WebUI vs Open WebUI</h2>
+
+  <div class="faq-item">
+    <h3>Is Hermes WebUI a replacement for Open WebUI?</h3>
+    <p>No. Hermes WebUI is purpose-built for Hermes Agent management. Open WebUI is a general-purpose AI chat platform. They solve different problems and many users run both.</p>
+  </div>
+
+  <div class="faq-item">
+    <h3>Can I connect Hermes Agent to Open WebUI?</h3>
+    <p>Yes. Hermes Agent exposes an OpenAI-compatible API at port 8642. Point Open WebUI's <code>OPENAI_API_BASE_URL</code> to <code>http://hermes-agent:8642/v1</code> and it works. This is the most common hybrid setup — Open WebUI for chat, Hermes Agent for autonomous task execution.</p>
+  </div>
+
+  <div class="faq-item">
+    <h3>Which is better for a small VPS (2 GB RAM)?</h3>
+    <p>Hermes WebUI. At ~200MB idle, it leaves room for the Hermes Agent process. Open WebUI's ~500MB – 1GB idle RAM would max out a 2GB instance when combined with the agent. If you're on a 2GB VPS, use Hermes WebUI single-container mode.</p>
+  </div>
+
+  <div class="faq-item">
+    <h3>Do I lose anything by using both?</h3>
+    <p>The only cost is extra RAM (~300MB for the second web UI container). If your VPS has 4GB+, there's no downside. The two UIs don't conflict — different ports, different volumes, shared Hermes Agent backend.</p>
+  </div>
+
+  <div class="faq-item">
+    <h3>Which one gets updated more frequently?</h3>
+    <p>Open WebUI releases more frequently (weekly cadence) with a larger contributor base. Hermes WebUI tracks Hermes Agent releases (roughly weekly in 2026). Both are actively maintained as of June 2026.</p>
+  </div>
+</section>
+
+<!-- Next -->
+<section class="section" id="next">
+  <h2>Next Steps</h2>
+  <div class="features-grid">
+    <div class="feature-card">
+      <h4>Deploy Hermes WebUI</h4>
+      <p>Complete walkthrough with working compose files for all 3 container modes. <a href="/#how-to">→ Full setup guide</a></p>
+    </div>
+    <div class="feature-card">
+      <h4>Troubleshooting Handbook</h4>
+      <p>8 real errors with verified fixes from GitHub issues. <a href="/#errors">→ Error catalog</a></p>
+    </div>
+    <div class="feature-card">
+      <h4>Docker Compose Examples</h4>
+      <p>Ready-to-run YAML files on GitHub — single, dual, and triple-container variants. <a href="https://github.com/Jakeshadow/hermes-webui-docker-examples" target="_blank" rel="noopener">→ GitHub repo</a></p>
+    </div>
+  </div>
+</section>
+
+</main>
+
+<footer>
+  <p><a href="/">← Back to HermesDocker Home</a></p>
+</footer>
+
+</body>
+</html>
