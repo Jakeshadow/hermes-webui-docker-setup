@@ -3,18 +3,18 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="description" content="Deploy Hermes WebUI with Docker Compose — single, two & three-container setups. Real error messages, verified fixes, working compose files.">
-  <title>Hermes WebUI Docker Setup: Multi-Container + Error Fixes</title>
+  <meta name="description" content="Complete Hermes WebUI Docker deployment guide — working Docker Compose files for single, two & three-container setups, plus a troubleshooting handbook with 8 real error messages and verified fixes from GitHub issues.">
+  <title>Hermes WebUI Docker Setup: Deployment, Compose & Troubleshooting Guide</title>
   <link rel="canonical" href="https://hermesdocker.com/">
   <meta name="robots" content="index, follow">
-  <meta property="og:title" content="Hermes WebUI Docker Setup: Multi-Container + Error Fixes">
-  <meta property="og:description" content="Deploy Hermes WebUI with Docker Compose. 3 container setups, 8 real error messages with verified fixes from GitHub issues. Working compose files included.">
+  <meta property="og:title" content="Hermes WebUI Docker Setup: Deployment, Compose & Troubleshooting Guide">
+  <meta property="og:description" content="Complete Hermes WebUI Docker deployment guide — working Docker Compose files for single, two & three-container setups, plus a troubleshooting handbook with 8 real error messages and verified fixes from GitHub issues.">
   <meta property="og:type" content="article">
   <meta property="og:url" content="https://hermesdocker.com/">
   <meta property="og:locale" content="en_US">
   <meta name="twitter:card" content="summary_large_image">
-  <meta name="twitter:title" content="Hermes WebUI Docker Setup: Multi-Container + Error Fixes">
-  <meta name="twitter:description" content="Deploy Hermes WebUI with Docker Compose. Real error messages, verified fixes, working compose files. 8 errors, 9 pain signals, all from GitHub issues.">
+  <meta name="twitter:title" content="Hermes WebUI Docker Setup: Deployment, Compose & Troubleshooting Guide">
+  <meta name="twitter:description" content="Complete Hermes WebUI Docker deployment guide — working Docker Compose files for single, two & three-container setups, plus a troubleshooting handbook with 8 real error messages and verified fixes.">
   <link rel="stylesheet" href="/style.css">
   <script type="application/ld+json">
   {
@@ -29,8 +29,8 @@
   {
     "@context": "https://schema.org",
     "@type": "Article",
-    "headline": "Hermes WebUI Docker Setup: Multi-Container Deployment + Error Fixes Handbook",
-    "description": "Deploy Hermes WebUI with Docker Compose — single, two & three-container setups. Real error messages from GitHub issues with verified fixes.",
+    "headline": "Hermes WebUI Docker Setup: Deployment, Compose & Troubleshooting Guide",
+    "description": "Complete Hermes WebUI Docker deployment guide — working Docker Compose files for single, two & three-container setups, plus a troubleshooting handbook with 8 real error messages and verified fixes from GitHub issues.",
     "author": { "@type": "Person", "name": "HermesDocker" },
     "datePublished": "2026-06-08",
     "dateModified": "2026-06-08",
@@ -95,8 +95,8 @@
 <!-- Hero -->
 <section class="hero">
   <div class="hero-badge">DEPLOYMENT + TROUBLESHOOTING</div>
-  <h1>Hermes WebUI Docker Setup: Multi-Container Deployment That Actually Works</h1>
-  <p class="subtitle">Single, two, and three-container Docker Compose setups for Hermes WebUI — plus 8 real error messages with verified fixes straight from GitHub issues. No guesswork. Just copy-paste solutions.</p>
+  <h1>Hermes WebUI Docker Setup: Deployment, Compose & Troubleshooting Guide</h1>
+  <p class="subtitle">Complete Hermes WebUI Docker deployment with working compose files for single, two, and three-container setups — plus a troubleshooting handbook with 8 real error messages and verified fixes from GitHub issues. No guesswork, just copy-paste solutions.</p>
   <div class="hero-meta">
     <span>8 verified fixes</span>
     <span>&middot;</span>
@@ -108,7 +108,7 @@
 
 <!-- Module 1: What Is Hermes WebUI -->
 <section class="section" id="what-is">
-  <h2>What Is Hermes WebUI</h2>
+  <h2>What Is Hermes WebUI — Docker Deployment Overview</h2>
   <p>Hermes WebUI is a lightweight browser frontend for Nous Research's <strong>Hermes Agent</strong> — an open-source AI agent that runs on your server, learns from conversations, and automates tasks. It gives you a three-panel chat interface (sessions, chat, file browser) that mirrors the CLI 1:1, accessible from any browser on your network.</p>
   <p>It ships with three official Docker Compose files: <strong>single-container</strong> (agent runs in-process), <strong>two-container</strong> (separate gateway from WebUI), and <strong>three-container</strong> (adds monitoring dashboard). The pre-built images are on GHCR — no build step, no Python dependency hell. Just <code>docker compose up -d</code> and you're at <code>http://localhost:8787</code>.</p>
   <div class="callout note">
@@ -118,7 +118,7 @@
 
 <!-- Module 2: Why Docker Deploy Hermes WebUI -->
 <section class="section" id="why">
-  <h2>Why Docker Deploy Hermes WebUI</h2>
+  <h2>Why Docker Deploy Hermes WebUI — Docker Compose Benefits</h2>
 
   <div class="reason">
     <h3>Dependency isolation without Python version wars</h3>
@@ -141,7 +141,7 @@
 
 <!-- Module 3: How To Deploy -->
 <section class="section" id="how-to">
-  <h2>How To Deploy Hermes WebUI with Docker (Multi-Container)</h2>
+  <h2>How To Deploy Hermes WebUI with Docker Compose (Multi-Container Setup)</h2>
 
   <div class="step">
     <h3>Step 1: Understand the Stack Architecture</h3>
@@ -274,7 +274,7 @@ hermes-webui:
 
 <!-- Module 5: Common Errors & Fixes -->
 <section class="section" id="errors">
-  <h2>Common Errors & Fixes (Troubleshooting Handbook)</h2>
+  <h2>Common Errors & Troubleshooting Handbook</h2>
   <p class="intro">Every error message is copy-pasteable from real Docker logs. Every fix is verified against GitHub issue resolutions. No invented solutions.</p>
 
   <div class="error-entry">
