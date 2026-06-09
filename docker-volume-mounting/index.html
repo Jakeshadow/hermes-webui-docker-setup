@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Fix docker_mount_cwd_to_workspace — how to mount your current working directory into a Docker container workspace. Working volume mount examples for Hermes WebUI, Claude Code, and general Docker.">
+  <title>docker_mount_cwd_to_workspace: Docker Volume Mount Guide</title>
+  <link rel="canonical" href="https://hermesdocker.com/docker-volume-mounting/">
+  <meta name="robots" content="index, follow">
+  <meta property="og:title" content="docker_mount_cwd_to_workspace — Docker Volume Mount Guide">
+  <meta property="og:description" content="Fix docker_mount_cwd_to_workspace errors with working volume mount examples. Mount your local directory into a Docker container workspace.">
+  <meta property="og:type" content="article">
+  <meta property="og:url" content="https://hermesdocker.com/docker-volume-mounting/">
+  <meta property="og:locale" content="en_US">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="docker_mount_cwd_to_workspace — Docker Volume Mount Guide">
+  <meta name="twitter:description" content="Fix docker_mount_cwd_to_workspace errors. Working examples for Hermes WebUI and general Docker.">
+  <link rel="stylesheet" href="/style.css">
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    "itemListElement": [
+      { "@type": "ListItem", "position": 1, "name": "Hermes Docker Setup", "item": "https://hermesdocker.com/" },
+      { "@type": "ListItem", "position": 2, "name": "Docker Volume Mounting Guide", "item": "https://hermesdocker.com/docker-volume-mounting/" }
+    ]
+  }
+  </script>
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "Article",
+    "headline": "docker_mount_cwd_to_workspace: Docker Volume Mount Guide",
+    "description": "Fix docker_mount_cwd_to_workspace errors — how to mount your current working directory into a Docker container workspace with working examples.",
+    "author": { "@type": "Person", "name": "HermesDocker" },
+    "datePublished": "2026-06-09",
+    "dateModified": "2026-06-09",
+    "url": "https://hermesdocker.com/docker-volume-mounting/",
+    "isAccessibleForFree": true
+  }
+  </script>
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    "mainEntity": [
+      {
+        "@type": "Question",
+        "name": "What does docker_mount_cwd_to_workspace mean?",
+        "acceptedAnswer": { "@type": "Answer", "text": "It's a configuration option that tells Docker to mount your current working directory (cwd) from the host machine into the container's /workspace directory. This lets the container access your local files. It's commonly used in AI coding tools and development containers where you want the container to see your project files." }
+      },
+      {
+        "@type": "Question",
+        "name": "How do I fix docker_mount_cwd_to_workspace permission errors?",
+        "acceptedAnswer": { "@type": "Answer", "text": "The most common cause is UID/GID mismatch between the host user and the container user. Fix: set WANTED_UID and WANTED_GID in your .env file to match your host user (run 'id -u' and 'id -g' to find them). For macOS users, UIDs start at 501, not 1000. Also ensure the mount directory exists on the host before starting the container." }
+      },
+      {
+        "@type": "Question",
+        "name": "What's the difference between bind mounts and named volumes for workspace?",
+        "acceptedAnswer": { "@type": "Answer", "text": "Bind mounts (./local:/workspace) map a specific host path into the container — ideal for development where you want live file sync. Named volumes (my_volume:/workspace) are managed by Docker and stored in /var/lib/docker — better for production data that doesn't need host access. For docker_mount_cwd_to_workspace scenarios, bind mounts are the standard choice." }
+      }
+    ]
+  }
+  </script>
+</head>
+<body>
+
+<nav>
+  <div class="nav-inner">
+    <span class="nav-logo"><a href="/">~/hermesdocker</a></span>
+    <ul class="nav-links">
+      <li><a href="/#how-to">Setup</a></li>
+      <li><a href="/#errors">Errors</a></li>
+      <li><a href="/#faq">FAQ</a></li>
+    </ul>
+  </div>
+</nav>
+
+<main>
+
+<section class="hero">
+  <div class="hero-badge">DOCKER VOLUMES</div>
+  <h1>docker_mount_cwd_to_workspace — Docker Volume Mount Guide</h1>
+  <p class="subtitle"><strong>Mount your current working directory into a Docker container's /workspace with one config option.</strong> This guide covers the exact syntax, common permission errors (UID/GID mismatch), and verified working examples for Hermes WebUI, Claude Code, and general Docker Compose setups.</p>
+</section>
+
+<section class="section">
+  <h2>What Is docker_mount_cwd_to_workspace?</h2>
+  <p><code>docker_mount_cwd_to_workspace</code> is a configuration flag used in AI coding tools and development containers. When enabled, Docker mounts your current working directory (<code>$PWD</code>) from the host into the container at <code>/workspace</code>. This gives the container read/write access to your local project files — critical for tools that need to read your codebase, edit files, or run commands in your project context.</p>
+  <p>In Hermes WebUI, this is handled by the volume mount configuration in the compose files. In Claude Code, it's controlled by the <code>docker_mount_cwd_to_workspace</code> setting.</p>
+</section>
+
+<section class="section">
+  <h2>How It Works: The Docker Volume Syntax</h2>
+  <p>Under the hood, this flag generates a standard Docker bind mount. Here's what it's equivalent to:</p>
+
+  <h3>docker_mount_cwd_to_workspace = true (what the tool does)</h3>
+  <div class="code-block">
+<span class="cm"># Equivalent Docker run command:</span>
+docker run -v <span class="st">"$(pwd):/workspace"</span> container-name
+
+<span class="cm"># Equivalent Docker Compose:</span>
+<span class="st">services:</span>
+  <span class="st">my-service:</span>
+    <span class="st">volumes:</span>
+      - <span class="st">./:/workspace</span>          <span class="cm"># Mount cwd into /workspace</span></div>
+
+  <h3>docker_mount_cwd_to_workspace = false (explicit path instead)</h3>
+  <div class="code-block">
+<span class="cm"># Mount a specific directory, not cwd:</span>
+<span class="st">volumes:</span>
+  - <span class="st">/home/user/projects/myapp:/workspace</span></div>
+</section>
+
+<section class="section">
+  <h2>Hermes WebUI: Volume Mount Configuration</h2>
+  <p>Hermes WebUI's multi-container setups use a shared data directory pattern. The workspace mount is separate from the agent config mount:</p>
+
+  <div class="code-block">
+<span class="cm"># Single-container — cwd mounted as workspace</span>
+<span class="st">services:</span>
+  <span class="st">hermes-webui:</span>
+    <span class="st">volumes:</span>
+      - <span class="st">~/.hermes:/home/hermeswebui/.hermes</span>   <span class="cm"># Agent config + sessions</span>
+      - <span class="st">~/workspace:/workspace</span>                     <span class="cm"># Your files, mounted into container</span>
+
+<span class="cm"># Three-container — shared data dir replaces cwd</span>
+<span class="st">volumes:</span>
+  - <span class="st">/mnt/data/hermes-allinone:/home/hermeswebui/.hermes</span>
+  - <span class="st">/mnt/data/hermes-allinone/hermes-agent-src:/home/hermeswebui/.hermes/hermes-agent</span></div>
+
+  <div class="callout warn">
+    <strong>The #1 failure point:</strong> UID/GID mismatch. The container user (<code>hermeswebui</code>, UID 1000) needs write permission on the host directory. On macOS, <code>id -u</code> returns 501 — the default WANTED_UID=10000 won't match. Always set <code>WANTED_UID</code> and <code>WANTED_GID</code> in <code>.env</code> before starting.
+  </div>
+</section>
+
+<section class="section">
+  <h2>Common docker_mount_cwd_to_workspace Errors</h2>
+
+  <div class="error-entry">
+    <h3>Error 1: Permission Denied on /workspace</h3>
+    <div class="code-block">
+<span class="kw">ERROR:</span> Permission denied: '/workspace'
+<span class="kw">ERROR:</span> Cannot write to mounted directory</div>
+    <p><strong>Cause:</strong> Container user UID doesn't match host directory owner.</p>
+    <p><strong>Fix:</strong> Run <code>id -u</code> on the host, set <code>WANTED_UID=&lt;your-uid&gt;</code> in <code>.env</code>, then <code>docker compose down && docker compose up -d</code>.</p>
+  </div>
+
+  <div class="error-entry">
+    <h3>Error 2: Mounted Directory Is Empty in Container</h3>
+    <div class="code-block">
+<span class="kw">$ ls /workspace</span>
+<span class="cm"># (nothing shown)</span></div>
+    <p><strong>Cause:</strong> The host path doesn't exist, or Docker Desktop hasn't been granted file-sharing permissions for that path.</p>
+    <p><strong>Fix:</strong> Docker Desktop → Settings → Resources → File Sharing → add your project directory. On Linux, verify the path exists: <code>ls -la $PWD</code>.</p>
+  </div>
+
+  <div class="error-entry">
+    <h3>Error 3: Changes in Container Not Visible on Host</h3>
+    <p><strong>Cause:</strong> Using a named volume instead of a bind mount, or the container is writing to a different path.</p>
+    <p><strong>Fix:</strong> Verify with <code>docker inspect &lt;container&gt; | jq '.[].Mounts'</code> that the mount type is <code>"bind"</code>, not <code>"volume"</code>. The source should be your host path, not a Docker volume name.</p>
+  </div>
+</section>
+
+<section class="section">
+  <h2>Best Practices for Workspace Mounts</h2>
+
+  <div class="features-grid">
+    <div class="feature-card">
+      <h4>Use relative paths in compose</h4>
+      <p><code>./:/workspace</code> is portable across machines. Avoid hardcoding <code>/home/alice/projects/...</code> — it breaks on other machines.</p>
+    </div>
+    <div class="feature-card">
+      <h4>Always set UID/GID explicitly</h4>
+      <p>Never rely on the container's default UID. Use <code>WANTED_UID</code> and <code>WANTED_GID</code> environment variables. This is the #1 cause of support issues.</p>
+    </div>
+    <div class="feature-card">
+      <h4>Prefer :Z or :z for SELinux</h4>
+      <p>On RHEL/Fedora/CentOS with SELinux enforcing, append <code>:Z</code> to the mount: <code>./:/workspace:Z</code>. Without it, the container can't read any files.</p>
+    </div>
+    <div class="feature-card">
+      <h4>Don't mount over critical container paths</h4>
+      <p>Never mount <code>./:/</code> (root). You'll shadow <code>/bin</code>, <code>/etc</code>, and <code>/usr</code> — the container won't start. Always mount to a dedicated path like <code>/workspace</code>.</p>
+    </div>
+  </div>
+</section>
+
+<section class="section" id="faq">
+  <h2>FAQ — docker_mount_cwd_to_workspace</h2>
+
+  <div class="faq-item">
+    <h3>Does docker_mount_cwd_to_workspace work on macOS?</h3>
+    <p>Yes, but with caveats. Docker Desktop on macOS uses a Linux VM — bind mounts go through osxfs, which is slower than native Linux mounts. For large projects (10,000+ files), expect a 2-3x slowdown on file operations. Mitigation: use <code>:cached</code> or <code>:delegated</code> mount options for better performance at the cost of consistency.</p>
+  </div>
+
+  <div class="faq-item">
+    <h3>Can I mount multiple directories into /workspace?</h3>
+    <p>Docker doesn't support merging multiple host directories into one container path. If you need files from two locations, mount them to separate paths (<code>/workspace</code> and <code>/data</code>) and use symlinks inside the container.</p>
+  </div>
+
+  <div class="faq-item">
+    <h3>What if my project is on an external drive?</h3>
+    <p>Docker Desktop: add the external drive path in Settings → Resources → File Sharing. Linux: make sure the drive is mounted with <code>exec</code> permissions (check <code>/etc/fstab</code> for <code>noexec</code> flag).</p>
+  </div>
+
+  <div class="faq-item">
+    <h3>How does this relate to the Hermes WebUI bootstrap error?</h3>
+    <p>The bootstrap Python environment error often appears alongside volume mount problems because the agent source needs to be accessible inside the container. If <code>/workspace</code> or the hermes-agent mount is empty, the bootstrap check fails. See the <a href="/#errors">main error catalog</a> for the full fix.</p>
+  </div>
+</section>
+
+<section class="section" id="next">
+  <h2>Next Steps</h2>
+  <div class="features-grid">
+    <div class="feature-card">
+      <h4>Full Hermes WebUI Setup</h4>
+      <p>Complete Docker Compose deployment with all 3 container modes. <a href="/#how-to">→ Setup guide</a></p>
+    </div>
+    <div class="feature-card">
+      <h4>Troubleshooting Handbook</h4>
+      <p>8 real errors with verified fixes, including the bootstrap Python environment conflict. <a href="/#errors">→ Error catalog</a></p>
+    </div>
+    <div class="feature-card">
+      <h4>Docker Compose Examples (GitHub)</h4>
+      <p>Ready-to-run YAML files — single, dual, and triple-container with correct volume mounts. <a href="https://github.com/Jakeshadow/hermes-webui-docker-examples" target="_blank" rel="noopener">→ GitHub repo</a></p>
+    </div>
+  </div>
+</section>
+
+</main>
+
+<footer>
+  <p><a href="/">← Back to HermesDocker Home</a></p>
+</footer>
+
+</body>
+</html>
